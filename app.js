@@ -11,18 +11,16 @@ const mongoURI = `mongodb+srv://${process.env.MONGO_DB_USERNAME}:${process.env.M
 
 let db;
 
-// Connect to MongoDB
 MongoClient.connect(mongoURI, { serverApi: ServerApiVersion.v1 })
   .then(client => {
     console.log('MongoDB connected');
-    db = client.db(databaseAndCollection.db); // Set the database reference
+    db = client.db(databaseAndCollection.db); 
   })
   .catch(err => {
     console.error("MongoDB connection error:", err);
     process.exit(1);
   });
 
-// Middleware
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(__dirname));
 
@@ -64,20 +62,16 @@ app.get('/', (req, res) => {
 app.post('/submit', async (req, res) => {
     const sleepCollection = db.collection(databaseAndCollection.collection);
 
-    // Extract form data
     const { bedtime, wakeupTime, mood } = req.body;
 
-    // Calculate sleep duration
     const duration = calculateSleepDuration(bedtime, wakeupTime);
 
     let songRecommendation = '';
-    let playlistType = ''; // Track the playlist type
+    let playlistType = ''; 
 
     try {
-        // Get Spotify Access Token
         const token = await getSpotifyToken();
 
-        // Fetch playlist based on duration and mood
         if (duration < 6) {
             playlistType = 'sleep';
         } else if (mood === 'happy') {
@@ -90,7 +84,6 @@ app.post('/submit', async (req, res) => {
 
         songRecommendation = await fetchSpotifyPlaylist(token, duration, mood);
 
-        // Prepare the sleep entry
         const sleepEntry = {
             bedtime,
             wakeupTime,
@@ -100,21 +93,17 @@ app.post('/submit', async (req, res) => {
             submissionDate: new Date().toISOString(),
         };
 
-        // Insert the sleep entry into the collection
         await sleepCollection.insertOne(sleepEntry);
 
-        // Fetch all saved records
         const allSleepData = await sleepCollection.find({}).toArray();
 
-        // Render results
         res.send(generateResultsHTML(bedtime, wakeupTime, mood, duration, playlistType, songRecommendation, allSleepData));
     } catch (error) {
         console.error("Error processing submission:", error);
-        res.status(500).send("An error occurred while processing your request. Please try again later.");
+        res.status(500).send("An error occurred while processing your request.");
     }
 });
 
-// Clear All Records
 app.post('/clear', async (req, res) => {
     const sleepCollection = db.collection(databaseAndCollection.collection);
 
@@ -139,20 +128,17 @@ app.post('/clear', async (req, res) => {
     }
 });
 
-// Helper Functions
 
-// Function to calculate sleep duration
 function calculateSleepDuration(bedtime, wakeupTime) {
     const [bedHour, bedMin] = bedtime.split(':').map(Number);
     const [wakeHour, wakeMin] = wakeupTime.split(':').map(Number);
     const bedInMinutes = bedHour * 60 + bedMin;
     const wakeInMinutes = wakeHour * 60 + wakeMin;
     let duration = wakeInMinutes - bedInMinutes;
-    if (duration < 0) duration += 24 * 60; // Handle overnight times
-    return (duration / 60).toFixed(1); // Convert to hours and round to 1 decimal
+    if (duration < 0) duration += 24 * 60; 
+    return (duration / 60).toFixed(1); 
 }
 
-// Function to get Spotify Access Token
 async function getSpotifyToken() {
     const clientID = process.env.SPOTIFY_CLIENT_ID;
     const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
@@ -170,7 +156,6 @@ async function getSpotifyToken() {
     return data.access_token;
 }
 
-// Function to fetch Spotify playlists dynamically based on sleep and mood
 async function fetchSpotifyPlaylist(token, duration, mood) {
     let query;
 
@@ -190,7 +175,6 @@ async function fetchSpotifyPlaylist(token, duration, mood) {
     return data.playlists.items[0]?.external_urls.spotify || 'No playlist available';
 }
 
-// Function to generate HTML results
 function generateResultsHTML(bedtime, wakeupTime, mood, duration, playlistType, songRecommendation, allSleepData) {
     return `
         <!DOCTYPE html>

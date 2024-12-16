@@ -2,8 +2,8 @@ body {
     font-family: Arial, sans-serif;
     background-color: #f3f4f6;
     background-image: url('background.jpg');
-    background-size: cover; /* Make sure the image covers the entire viewport */
-    background-repeat: no-repeat; /* Prevent tiling */
+    background-size: cover; 
+    background-repeat: no-repeat; 
     color: #333;
     text-align: center;
 }
